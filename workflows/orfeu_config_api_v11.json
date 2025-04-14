@@ -1,0 +1,331 @@
+{
+  "1": {
+    "inputs": {
+      "seed": 743471807516795,
+      "steps": 7,
+      "cfg": 4,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 0.7000000000000001,
+      "model": [
+        "67",
+        0
+      ],
+      "positive": [
+        "54",
+        0
+      ],
+      "negative": [
+        "54",
+        1
+      ],
+      "latent_image": [
+        "49",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "2": {
+    "inputs": {
+      "ckpt_name": "dreamshaperXL_v21TurboDPMSDE.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "3": {
+    "inputs": {
+      "text": [
+        "52",
+        0
+      ],
+      "clip": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "4": {
+    "inputs": {
+      "text": "ugly, deformed, embedding:bad-artist, embedding:bad-hands-5, artist name, watermark, reddish tones, closed eyes, low quality, signature, watermark, photo, photorealistic, realism, off-center, deformed, 35mm film, dslr, cropped, frame, worst quality, low quality, lowres, JPEG artifacts",
+      "clip": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "5": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "13": {
+    "inputs": {
+      "lora_name": "OIL_ON_CANVAS_v3.safetensors",
+      "strength_model": 0.9,
+      "strength_clip": 0.9,
+      "model": [
+        "2",
+        0
+      ],
+      "clip": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "16": {
+    "inputs": {
+      "samples": [
+        "1",
+        0
+      ],
+      "vae": [
+        "19",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "17": {
+    "inputs": {
+      "images": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "18": {
+    "inputs": {
+      "stop_at_clip_layer": -2,
+      "clip": [
+        "2",
+        1
+      ]
+    },
+    "class_type": "CLIPSetLastLayer",
+    "_meta": {
+      "title": "CLIP Set Last Layer"
+    }
+  },
+  "19": {
+    "inputs": {
+      "vae_name": "sdxl_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "47": {
+    "inputs": {
+      "image": "crop_82872_1.jpg"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "48": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "interpolation": "nearest",
+      "method": "stretch",
+      "condition": "always",
+      "multiple_of": 0,
+      "image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "ImageResize+",
+    "_meta": {
+      "title": "🔧 Image Resize"
+    }
+  },
+  "49": {
+    "inputs": {
+      "pixels": [
+        "48",
+        0
+      ],
+      "vae": [
+        "19",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "50": {
+    "inputs": {
+      "model": "wd-v1-4-moat-tagger-v2",
+      "threshold": 0.35000000000000003,
+      "character_threshold": 0.85,
+      "replace_underscore": true,
+      "trailing_comma": true,
+      "exclude_tags": "realistic",
+      "tags": "solo, looking at viewer, brown hair, shirt, 1boy, closed mouth, upper body, male focus, hair over one eye, black shirt, facial hair, portrait, beard, stubble, ",
+      "image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "WD14Tagger|pysssss",
+    "_meta": {
+      "title": "WD14 Tagger 🐍"
+    }
+  },
+  "52": {
+    "inputs": {
+      "action": "append",
+      "tidy_tags": "yes",
+      "text_a": [
+        "50",
+        0
+      ],
+      "text_b": "portrait, oil on canvas, open eyes, modernism, bright earthy colors, limited color pallete, high quality, high resolution, oil painting art style, lush textures, expressive brushwork, blendable layers, dynamic compositions, professional-grade finish, versatile medium, timeless elegance, immersive depth, intricate detailing, adds depth and dimension, innovative technique, cultural significance, pastels artwork, rich colors, vibrant hues, impasto painting art style, thick and textured brushwork, vibrant colors, tactile quality, expressive strokes, bold contrasts, dramatic lighting effects, immersive texture, creates visual interest, cubism art style, fragmented forms, geometric shapes, <lora:OIL_ON_CANVAS_v3:0.9>",
+      "text_c": "",
+      "result": "solo, looking at viewer, brown hair, shirt, 1boy, closed mouth, upper body, male focus, hair over one eye, black shirt, facial hair, portrait, beard, stubble, portrait, oil on canvas, open eyes, modernism, bright earthy colors, limited color pallete, high quality, high resolution, oil painting art style, lush textures, expressive brushwork, blendable layers, dynamic compositions, professional-grade finish, versatile medium, timeless elegance, immersive depth, intricate detailing, adds depth and dimension, innovative technique, cultural significance, pastels artwork, rich colors, vibrant hues, impasto painting art style, thick and textured brushwork, vibrant colors, tactile quality, expressive strokes, bold contrasts, dramatic lighting effects, immersive texture, creates visual interest, cubism art style, fragmented forms, geometric shapes, <lora:OIL_ON_CANVAS_v3:0.9>"
+    },
+    "class_type": "StringFunction|pysssss",
+    "_meta": {
+      "title": "String Function 🐍"
+    }
+  },
+  "53": {
+    "inputs": {
+      "preprocessor": "depth_anything_v2",
+      "sd_version": "sdxl",
+      "resolution": 1024,
+      "preprocessor_override": "None",
+      "image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "AV_ControlNetPreprocessor",
+    "_meta": {
+      "title": "ControlNet Preprocessor"
+    }
+  },
+  "54": {
+    "inputs": {
+      "strength": 1,
+      "start_percent": 0,
+      "end_percent": 1,
+      "positive": [
+        "3",
+        0
+      ],
+      "negative": [
+        "4",
+        0
+      ],
+      "control_net": [
+        "56",
+        0
+      ],
+      "image": [
+        "53",
+        0
+      ],
+      "vae": [
+        "19",
+        0
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "Apply ControlNet"
+    }
+  },
+  "56": {
+    "inputs": {
+      "control_net_name": "diffusers_xl_depth_full.safetensors"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "Load ControlNet Model"
+    }
+  },
+  "67": {
+    "inputs": {
+      "weight": 1,
+      "start_at": 0,
+      "end_at": 0.6,
+      "weight_type": "style transfer",
+      "model": [
+        "68",
+        0
+      ],
+      "ipadapter": [
+        "68",
+        1
+      ],
+      "image": [
+        "69",
+        0
+      ]
+    },
+    "class_type": "IPAdapter",
+    "_meta": {
+      "title": "IPAdapter"
+    }
+  },
+  "68": {
+    "inputs": {
+      "preset": "PLUS (high strength)",
+      "model": [
+        "13",
+        0
+      ]
+    },
+    "class_type": "IPAdapterUnifiedLoader",
+    "_meta": {
+      "title": "IPAdapter Unified Loader"
+    }
+  },
+  "69": {
+    "inputs": {
+      "image": "orfeu_ref02.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  }
+}
