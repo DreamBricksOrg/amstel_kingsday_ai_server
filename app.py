@@ -175,30 +175,12 @@ def show_images_carousel(cod):
     return render_template('download-images-carousel.html', image_paths=image_paths, cod=cod)
 
 
-# @app.route('/terms/<link_id>')
-# def terms(link_id):
-#     if valid_links.get(link_id):
-#         return render_template('terms.html', link_id=link_id)
-#     else:
-#         return redirect(url_for('error'))
-
 @app.route('/terms')
 def terms():
     timer = parameters.TIMER_TERMS
     print(timer)
     return render_template('terms.html', timer=timer)
 
-
-# @app.route('/accept/<link_id>', methods=['POST'])
-# def accept(link_id):
-#     if valid_links.get(link_id):
-#         valid_links[link_id] = False
-#         socketio.emit('invalidate_link', {'link_id': link_id}, to='/')
-#         random_number = 1234  # random.randint(1, 99999)
-#         udp_sender.send(f"INI:{random_number:05d}\n")
-#         return redirect(url_for('play', cod=random_number))
-#     else:
-#         return redirect(url_for('error'))
 
 @app.route('/accept', methods=['POST'])
 def accept():
@@ -222,17 +204,6 @@ def send_log(status):
 def finish(status, additional_send):
     save_csv(status, additional_send)
     return redirect(url_for('cta'))
-
-
-@app.route('/deny', methods=['POST'])
-def deny_btn():
-    save_csv("TERMOS_NAO_ACEITO")
-    return redirect(url_for('cta'))
-
-
-@app.route('/deny')
-def deny():
-    return render_template("deny.html")
 
 
 def process_image(path_to_image, config_idx, out_folder):

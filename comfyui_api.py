@@ -147,7 +147,7 @@ class ComfyUiAPI:
 
 if __name__ == '__main__':
     #workflow_path = r"C:\Users\DB\Downloads\basic2_api.json"
-    test_workflow_path = r"C:\Users\DB\Downloads\orfeu_config_api_v06.json"
+    test_workflow_path = r"C:\Users\DB\Downloads\amstel_ipadapter_api_v03.json"
     test_image_path = r"C:\Users\DB\Downloads\dudu.jpg"
     #test_comfyui_api(workflow_path, image_path)
     import parameters as param
