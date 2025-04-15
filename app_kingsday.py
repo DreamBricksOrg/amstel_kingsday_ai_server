@@ -1,6 +1,6 @@
 import os
 import asyncio
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, jsonify
 from comfyui_api import ComfyUiAPI
 import parameters as param
 from werkzeug.utils import secure_filename
@@ -31,14 +31,14 @@ def index():
     image_url = request.args.get('image_url')
     return render_template("index.html", image_url=image_url)
 
-@app.route('/upload', methods=['POST'])
-def upload():
+@app.route('/api/upload', methods=['POST'])
+def api_upload():
     if 'image' not in request.files:
-        return "Nenhuma imagem enviada", 400
+        return jsonify({'error': 'Nenhuma imagem enviada'}), 400
 
     file = request.files['image']
     if file.filename == '':
-        return "Nome de arquivo inválido", 400
+        return jsonify({'error': 'Nome de arquivo inválido'}), 400
 
     filename = secure_filename(file.filename)
     input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -49,7 +49,9 @@ def upload():
     result_path = loop.run_until_complete(run_async_process(input_path))
 
     relative_path = os.path.relpath(result_path, 'static').replace("\\", "/")
-    return redirect(url_for('index', image_url=relative_path))
+    image_url = f'/static/{relative_path}'
+
+    return jsonify({'message': 'Imagem processada com sucesso', 'image_url': image_url}), 200
 
 async def run_async_process(image_path):
     loop = asyncio.get_event_loop()

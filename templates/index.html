@@ -86,27 +86,51 @@
 <div class="container">
     <h1>Envie sua imagem</h1>
 
-    <form method="post" action="/upload" enctype="multipart/form-data" id="upload-form">
+    <form id="upload-form">
         <input type="file" name="image" accept="image/*" required><br>
         <button type="submit" id="submit-btn">Processar</button>
         <div class="spinner" id="spinner"></div>
     </form>
 
-    {% if image_url %}
-    <h2>Resultado:</h2>
-    <img src="{{ url_for('static', filename=image_url) }}" alt="Imagem processada">
-    {% endif %}
-</div>
+    <div id="result"></div>
 
-<script>
-    const form = document.getElementById('upload-form');
-    const button = document.getElementById('submit-btn');
-    const spinner = document.getElementById('spinner');
+    <script>
+        const form = document.getElementById('upload-form');
+        const button = document.getElementById('submit-btn');
+        const spinner = document.getElementById('spinner');
+        const resultDiv = document.getElementById('result');
 
-    form.addEventListener('submit', function () {
-        button.style.display = "none";
-        spinner.style.display = "block";
-    });
-</script>
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            button.style.display = "none";
+            spinner.style.display = "block";
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                spinner.style.display = "none";
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <h2>Resultado:</h2>
+                        <img src="${data.image_url}" alt="Imagem processada">
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: yellow;">Erro: ${data.error}</p>`;
+                }
+            } catch (error) {
+                spinner.style.display = "none";
+                resultDiv.innerHTML = `<p style="color: yellow;">Erro de rede ou servidor</p>`;
+            }
+
+            button.style.display = "inline-block";
+        });
+    </script>
 </body>
 </html>
