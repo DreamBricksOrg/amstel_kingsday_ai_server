@@ -112,9 +112,9 @@ class ComfyUiAPI:
 
         gender_prompt = king_prompt if is_king else queen_prompt
 
-        input_prompt_text = f"""30 years of age, {gender_prompt}, golden crown, gold and red ornaments, 
+        input_prompt_text = f"""30 years of age, {gender_prompt}, gold and red ornaments, 
          european red coat with white fur, renascence, inside a castle, old paintings on the walls, 
-         large windows with red curtains, blury background, photo, photorealistic, realism"""
+         large windows with red curtains, blurry background, photo, photorealistic, realism"""
 
         prompt = copy.deepcopy(self.workflow_template)
         prompt[self.node_id_ksampler]["inputs"]["seed"] = random.randint(1, 1_000_000_000)
