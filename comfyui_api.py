@@ -107,8 +107,8 @@ class ComfyUiAPI:
             comfyui_path_image = self.upload_file(f, "", True)
         timing["upload"] = datetime.datetime.now()
 
-        king_prompt = "king wearing a golden crown"
-        queen_prompt = "queen wearing a golden crown, diamond earings and necklaces"
+        king_prompt = "king wearing a golden crown, male, 1boy"
+        queen_prompt = "queen wearing a golden crown, female, 1girl, woman, diamond earings and necklaces"
 
         gender_prompt = king_prompt if is_king else queen_prompt
 
