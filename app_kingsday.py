@@ -29,11 +29,12 @@ api = ComfyUiAPI(
     img_temp_folder=app.config['OUTPUT_FOLDER'],
     workflow_path=param.WORKFLOW_PATH,
     node_id_ksampler=param.WORKFLOW_NODE_ID_KSAMPLER,
-    node_id_image_load=param.WORKFLOW_NODE_ID_IMAGE_LOAD
+    node_id_image_load=param.WORKFLOW_NODE_ID_IMAGE_LOAD,
+    node_id_text_input=param.WORKFLOW_NODE_ID_TEXT_INPUT
 )
 
-def process_image(image_path):
-    return api.generate_image(image_path)
+def process_image(image_path, is_king):
+    return api.generate_image(image_path, is_king=is_king)
 
 @app.route('/', methods=['GET'])
 def index():
@@ -46,8 +47,10 @@ def api_upload():
         return jsonify({'error': 'Nenhuma imagem enviada'}), 400
 
     file = request.files['image']
-    choice = request.form['choice']
+    gender_choice = request.form['choice']
     print(choice)
+    is_king = gender_choice == "king"
+
     if file.filename == '':
         return jsonify({'error': 'Nome de arquivo inválido'}), 400
 
@@ -58,16 +61,16 @@ def api_upload():
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    result_path = loop.run_until_complete(run_async_process(filename))
+    result_path = loop.run_until_complete(run_async_process(filename, is_king))
 
     relative_path = os.path.relpath(result_path, 'static').replace("\\", "/")
     image_url = f'/static/{relative_path}'
 
     return jsonify({'message': 'Imagem processada com sucesso', 'image_url': image_url}), 200
 
-async def run_async_process(image_path):
+async def run_async_process(image_path, is_king):
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(executor, process_image, image_path)
+    return await loop.run_in_executor(executor, process_image, image_path, is_king)
 
 
 def remove_old_files(minutes=10):

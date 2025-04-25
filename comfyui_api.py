@@ -14,11 +14,12 @@ from utils import generate_timestamped_filename
 
 
 class ComfyUiAPI:
-    def __init__(self, server_address, img_temp_folder, workflow_path, node_id_ksampler, node_id_image_load):
+    def __init__(self, server_address, img_temp_folder, workflow_path, node_id_ksampler, node_id_image_load, node_id_text_input):
         self.server_address = server_address
         self.img_temp_folder = img_temp_folder
         self.node_id_ksampler = node_id_ksampler
         self.node_id_image_load = node_id_image_load
+        self.node_id_text_input = node_id_text_input
         self.session = requests.Session()  # conexão HTTP reutilizável
 
         # Carrega workflow uma vez e usa cópia depois
@@ -97,7 +98,7 @@ class ComfyUiAPI:
                 image.save(image_filename, optimize=True)
                 return image_filename  # Retorna apenas a primeira imagem
 
-    def generate_image(self, image_path: str) -> str:
+    def generate_image(self, image_path: str, is_king=True) -> str:
         timing = {}
         client_id = str(uuid.uuid4())  # Garante isolamento por requisição
 
@@ -106,9 +107,19 @@ class ComfyUiAPI:
             comfyui_path_image = self.upload_file(f, "", True)
         timing["upload"] = datetime.datetime.now()
 
+        king_prompt = "king wearing a golden crown"
+        queen_prompt = "queen wearing a golden crown, diamond earings and necklaces"
+
+        gender_prompt = king_prompt if is_king else queen_prompt
+
+        input_prompt_text = f"""30 years of age, {gender_prompt}, golden crown, gold and red ornaments, 
+         european red coat with white fur, renascence, inside a castle, old paintings on the walls, 
+         large windows with red curtains, blury background, photo, photorealistic, realism"""
+
         prompt = copy.deepcopy(self.workflow_template)
         prompt[self.node_id_ksampler]["inputs"]["seed"] = random.randint(1, 1_000_000_000)
         prompt[self.node_id_image_load]["inputs"]["image"] = comfyui_path_image
+        prompt[self.node_id_text_input]["inputs"]["text"] = input_prompt_text
 
         ws = websocket.WebSocket()
         ws.connect(f"ws://{self.server_address}/ws?clientId={client_id}")
