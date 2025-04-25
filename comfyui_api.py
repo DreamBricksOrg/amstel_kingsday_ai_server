@@ -51,7 +51,6 @@ class ComfyUiAPI:
                 message = json.loads(message_raw)
                 if message['type'] == 'executing':
                     data = message['data']
-                    print("Executing...")
                     if data['node'] is None and data['prompt_id'] == prompt_id:
                         break
             else:
@@ -128,5 +127,37 @@ class ComfyUiAPI:
         print(f"Processing time:    {(timing['execution_done'] - timing['start_execution']).total_seconds()}s")
         print(f"Saving time:        {(timing['save'] - timing['execution_done']).total_seconds()}s")
         print(f"Total:              {(timing['save'] - start_time).total_seconds()}s")
+        #watermark_file_path = 'static/assets/logo_amstel.png'
 
+        print(f"[DEBUG] Saved image path: {image_file_path}")
+        assert image_file_path is not None, "Erro: Caminho da imagem gerada está vazio!"
+
+        #if not os.path.exists(watermark_file_path):
+        #    raise FileNotFoundError(f"Marca d'água não encontrada em: {watermark_file_path}")
+
+        #self.add_watermark_image(image_file_path, watermark_file_path)
         return image_file_path
+
+    def add_watermark_image(self, base_image_path: str, watermark_path: str) -> None:
+        base_image = Image.open(base_image_path).convert("RGBA")
+        watermark = Image.open(watermark_path).convert("RGBA")
+
+        # Redimensiona a marca se for maior que a imagem base
+        if watermark.width > base_image.width:
+            ratio = base_image.width / watermark.width * 0.5  # Reduz para 50% da largura, por exemplo
+            new_size = (int(watermark.width * ratio), int(watermark.height * ratio))
+            watermark = watermark.resize(new_size, Image.Resampling.LANCZOS)
+
+        # Posição: inferior central
+        position = (
+            (base_image.width - watermark.width) // 2,
+            base_image.height - watermark.height - 10
+        )
+
+        # Combina as imagens
+        composite = Image.new("RGBA", base_image.size)
+        composite = Image.alpha_composite(composite, base_image)
+        composite.paste(watermark, position, watermark)  # Usa o canal alpha da marca
+
+        # Salva por cima (ou pode salvar em outro caminho)
+        composite.convert("RGB").save(base_image_path, "PNG")

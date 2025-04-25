@@ -1,12 +1,21 @@
 import os
 import asyncio
+
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 from comfyui_api import ComfyUiAPI
 import parameters as param
 from werkzeug.utils import secure_filename
 from concurrent.futures import ThreadPoolExecutor
+from flask_cors import CORS
+import shutil
+import time
+import uuid
+
+from utils import generate_timestamped_filename
 
 app = Flask(__name__)
+CORS(app)
 app.config['UPLOAD_FOLDER'] = 'static/inputs'
 app.config['OUTPUT_FOLDER'] = 'static/outputs'
 
@@ -37,16 +46,19 @@ def api_upload():
         return jsonify({'error': 'Nenhuma imagem enviada'}), 400
 
     file = request.files['image']
+    choice = request.form['choice']
+    print(choice)
     if file.filename == '':
         return jsonify({'error': 'Nome de arquivo inválido'}), 400
 
-    filename = secure_filename(file.filename)
-    input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(input_path)
+    filename = generate_timestamped_filename(app.config['UPLOAD_FOLDER'], f"kingsday_in_{str(uuid.uuid4())}", "jpg")
+
+    # input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filename)
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    result_path = loop.run_until_complete(run_async_process(input_path))
+    result_path = loop.run_until_complete(run_async_process(filename))
 
     relative_path = os.path.relpath(result_path, 'static').replace("\\", "/")
     image_url = f'/static/{relative_path}'
@@ -56,6 +68,33 @@ def api_upload():
 async def run_async_process(image_path):
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(executor, process_image, image_path)
+
+
+def remove_old_files(minutes=10):
+    directories = ['static/outputs', 'static/inputs']
+    current_time = time.time()
+
+    for directory in directories:
+        if os.path.exists(directory):
+            for filename in os.listdir(directory):
+                file_path = os.path.join(directory, filename)
+
+                if os.path.isfile(file_path):
+                    creation_time = os.path.getctime(file_path)
+                    time_difference = (current_time - creation_time) / 60
+
+                    if time_difference > minutes:
+                        os.remove(file_path)
+                        print(f'O arquivo "{filename}" foi excluído de "{directory}".')
+                    else:
+                        print(f'O arquivo "{filename}" em "{directory}" foi criado há menos de {minutes} minutos.')
+        else:
+            print(f'O diretório "{directory}" não existe.')
+
+
+# scheduler = BackgroundScheduler()
+# scheduler.add_job(remove_old_files, 'interval', minutes=15)
+# scheduler.start()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
