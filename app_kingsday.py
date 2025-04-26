@@ -88,7 +88,7 @@ def api_upload():
         return jsonify({'error': 'Nome de arquivo inválido'}), 400
 
     filename = generate_timestamped_filename(app.config['UPLOAD_FOLDER'], f"kingsday_in_{str(uuid.uuid4())}", "jpg")
-    logger.info(f"Request to generate a {gender_choice} with image '{file.filename}'.")
+    logger.info(f"Request to generate a {gender_choice} with image '{filename}'.")
 
     # input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filename)
@@ -136,5 +136,5 @@ def remove_old_files(minutes=10):
 
 if __name__ == '__main__':
     logger.info("Application started (logging to file).")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=param.SERVER_PORT)
 
