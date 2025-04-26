@@ -4,6 +4,7 @@ import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 from comfyui_api import ComfyUiAPI
+#from comfyui_api_aws import ComfyUiAPI
 import parameters as param
 from werkzeug.utils import secure_filename
 from concurrent.futures import ThreadPoolExecutor
@@ -48,7 +49,7 @@ def api_upload():
 
     file = request.files['image']
     gender_choice = request.form['choice']
-    print(choice)
+    print(gender_choice)
     is_king = gender_choice == "king"
 
     if file.filename == '':
@@ -101,3 +102,4 @@ def remove_old_files(minutes=10):
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+

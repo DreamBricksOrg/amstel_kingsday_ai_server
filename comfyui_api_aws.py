@@ -11,7 +11,8 @@ import io
 import os
 import copy
 from utils import generate_timestamped_filename
-
+import comfyui_api_utils
+import time
 
 class ComfyUiAPI:
     def __init__(self, server_address, img_temp_folder, workflow_path, node_id_ksampler, node_id_image_load, node_id_text_input):
@@ -42,7 +43,7 @@ class ComfyUiAPI:
         with urllib.request.urlopen(f"http://{self.server_address}/history/{prompt_id}") as response:
             return json.loads(response.read())
 
-    def get_images(self, ws, prompt: dict, client_id: str) -> dict:
+    def get_images_old(self, ws, prompt: dict, client_id: str) -> dict:
         prompt_id = self.queue_prompt(prompt, client_id)['prompt_id']
         output_images = {}
 
@@ -98,15 +99,7 @@ class ComfyUiAPI:
                 image.save(image_filename, optimize=True)
                 return image_filename  # Retorna apenas a primeira imagem
 
-    def generate_image(self, image_path: str, is_king=True) -> str:
-        timing = {}
-        client_id = str(uuid.uuid4())  # Garante isolamento por requisição
-
-        start_time = datetime.datetime.now()
-        with open(image_path, "rb") as f:
-            comfyui_path_image = self.upload_file(f, "", True)
-        timing["upload"] = datetime.datetime.now()
-
+    def prepare_prompt(self, is_king=True):
         king_prompt = "king wearing a golden crown, male, 1boy"
         queen_prompt = "queen wearing a golden crown, female, 1girl, woman, diamond earings and necklaces"
 
@@ -116,18 +109,63 @@ class ComfyUiAPI:
          european red coat with white fur, renascence, inside a castle, old paintings on the walls, 
          large windows with red curtains, blurry background, photo, photorealistic, realism"""
 
+        return input_prompt_text
+
+    def get_images(self, prompt, client_id, server_address):
+        prompt_id, aws_alb_cookie = comfyui_api_utils.queue_prompt(prompt, client_id, server_address)
+        output_images = {}
+
+        print("Generation started.")
+        while True:
+            history = comfyui_api_utils.get_history(prompt_id, server_address, aws_alb_cookie)
+            if len(history) == 0:
+                print("Generation not ready, sleep 1s ...")
+                time.sleep(1)
+                continue
+            else:
+                print("Generation finished.")
+                break
+
+        history = history[prompt_id]
+        for node_id in history['outputs']:
+            node_output = history['outputs'][node_id]
+            if 'images' in node_output and node_output['images'][0]['type'] == 'output':
+                images_output = []
+                for image in node_output['images']:
+                    image_data = comfyui_api_utils.get_image(image['filename'], image['subfolder'], image['type'],
+                                                             server_address, aws_alb_cookie)
+                    images_output.append(image_data)
+                output_images[node_id] = images_output
+        return output_images, prompt_id
+
+    def generate_image(self, image_path: str, is_king=True) -> str:
+        timing = {}
+        client_id = str(uuid.uuid4())  # Garante isolamento por requisição
+
+        start_time = datetime.datetime.now()
+        with open(image_path, "rb") as f:
+            #comfyui_path_image = self.upload_file(f, "", True)
+            comfyui_path_image = comfyui_api_utils.upload_image(image_path=image_path,
+                                                                server_address=self.server_address)
+
+        timing["upload"] = datetime.datetime.now()
+
+        input_prompt_text = self.prepare_prompt(is_king)
+
         prompt = copy.deepcopy(self.workflow_template)
         prompt[self.node_id_ksampler]["inputs"]["seed"] = random.randint(1, 1_000_000_000)
         prompt[self.node_id_image_load]["inputs"]["image"] = comfyui_path_image
         prompt[self.node_id_text_input]["inputs"]["text"] = input_prompt_text
 
-        ws = websocket.WebSocket()
-        ws.connect(f"ws://{self.server_address}/ws?clientId={client_id}")
+        #ws = websocket.WebSocket()
+        #ws.connect(f"ws://{self.server_address}/ws?clientId={client_id}")
         timing["start_execution"] = datetime.datetime.now()
 
-        images = self.get_images(ws, prompt, client_id)
+        images, prompt_id = self.get_images(prompt, client_id, server_address=self.server_address)
+        #images = self.get_images(ws, prompt, client_id)
+
         timing["execution_done"] = datetime.datetime.now()
-        ws.close()
+        #ws.close()
 
         image_file_path = self.save_image(images)
         timing["save"] = datetime.datetime.now()
@@ -186,5 +224,6 @@ if __name__ == '__main__':
         node_id_text_input=param.WORKFLOW_NODE_ID_TEXT_INPUT
     )
 
-    input_image = r"C:\Users\Win 11\Downloads\maekiko.png"
-    image_path = api.generate_image(input_image, is_king=False)
+    #input_image = r"C:\Users\Win 11\Downloads\maekiko.png"
+    input_image = r"C:\Users\Win 11\Downloads\dudu_3x4.jpg"
+    image_path = api.generate_image(input_image, is_king=True)

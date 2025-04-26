@@ -1,7 +1,7 @@
 {
   "3": {
     "inputs": {
-      "seed": 729209889115159,
+      "seed": 539756363671684,
       "steps": 10,
       "cfg": 3,
       "sampler_name": "dpmpp_2m_sde",
@@ -40,8 +40,8 @@
   },
   "5": {
     "inputs": {
-      "width": 1024,
-      "height": 1024,
+      "width": 768,
+      "height": 1568,
       "batch_size": 1
     },
     "class_type": "EmptyLatentImage",
@@ -133,7 +133,8 @@
   },
   "15": {
     "inputs": {
-      "image": "julio.jpg"
+      "image": "maekiko.png",
+      "upload": "image"
     },
     "class_type": "LoadImage",
     "_meta": {
@@ -184,7 +185,7 @@
         0
       ],
       "text_c": "",
-      "result": "solo, 1boy, male focus, glasses, young, european golden crown, gold and red ornaments, european red coat with white fur, renascence, inside an old castle, old paintings on the walls, large windows with red curtains, blury background, photo, photorealistic, realism"
+      "result": "solo, 1boy, male focus, glasses, portrait, realistic, young, european golden crown, gold and red ornaments, european red coat with white fur, renascence, inside an old castle, old paintings on the walls, large windows with red curtains, blury background, photo, photorealistic, realism"
     },
     "class_type": "StringFunction|pysssss",
     "_meta": {
@@ -199,7 +200,7 @@
       "replace_underscore": true,
       "trailing_comma": true,
       "exclude_tags": "denim jacket, black shirt, nude, pubic hair, nipples, medium breasts, large breasts, female pubic hair, monochrome, black shirt, pink shirt, yellow shirt, green shirt, blue shirt, hat, bikini, swimsuit, breasts, shirt, blue, green, yellow, orange, red, brown, cian, pink, green shirt",
-      "tags": "solo, 1boy, male focus, glasses, ",
+      "tags": "solo, 1boy, male focus, glasses, portrait, realistic, ",
       "image": [
         "31",
         0
@@ -212,7 +213,8 @@
   },
   "20": {
     "inputs": {
-      "image": "logo_amstel_v02.png"
+      "image": "logo_amstel_v02.png",
+      "upload": "image"
     },
     "class_type": "LoadImage",
     "_meta": {
@@ -232,7 +234,7 @@
         0
       ],
       "text_c": "",
-      "result": "young, european golden crown, gold and red ornaments, european red coat with white fur, renascence, inside an old castle, old paintings on the walls, large windows with red curtains, blury background, photo, photorealistic, realism, solo, 1boy, male focus, glasses,"
+      "result": "young, european golden crown, gold and red ornaments, european red coat with white fur, renascence, inside an old castle, old paintings on the walls, large windows with red curtains, blury background, photo, photorealistic, realism, solo, 1boy, male focus, glasses, portrait, realistic,"
     },
     "class_type": "StringFunction|pysssss",
     "_meta": {
@@ -291,8 +293,8 @@
       "watermark_text": "",
       "font": "assets/fonts/DMSans-VariableFont_opsz,wght.ttf",
       "font_size": 16,
-      "logo_scale_percentage": 25,
-      "x_padding": 365,
+      "logo_scale_percentage": 32,
+      "x_padding": 255,
       "y_padding": 20,
       "rotation": 0,
       "opacity": 0,
