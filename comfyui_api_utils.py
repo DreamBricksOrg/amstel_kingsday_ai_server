@@ -39,7 +39,6 @@ def upload_image(image_path, server_address):
     with open(image_path, "rb") as f:
         files = {"image": f}
         response = requests.post("{}/upload/image".format(server_address), files=files)
-    print(response.text)
 
     if response.status_code != 200:
         print(f"[Upload Error] {response.status_code} - {response.reason}")
