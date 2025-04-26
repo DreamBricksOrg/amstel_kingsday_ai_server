@@ -3,10 +3,13 @@ import asyncio
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, render_template, redirect, url_for, jsonify
-from comfyui_api import ComfyUiAPI
-#from comfyui_api_aws import ComfyUiAPI
+
+import utils
+#from comfyui_api import ComfyUiAPI
+from comfyui_api_aws import ComfyUiAPI
 import parameters as param
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import BadRequestKeyError
 from concurrent.futures import ThreadPoolExecutor
 from flask_cors import CORS
 import shutil
@@ -14,6 +17,30 @@ import time
 import uuid
 
 from utils import generate_timestamped_filename
+import logging
+
+# Configure logging to write to a file and to the std output
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Create a file handler and set its format and level
+file_handler = logging.FileHandler(generate_timestamped_filename("logs", param.LOG_FILENAME_PREFIX, "log"))
+file_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Create a stream handler and set its format and level
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.INFO)
+stream_handler.setFormatter(formatter)
+
+# Add the handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
+
+
+logger = logging.getLogger(__name__)
+
 
 app = Flask(__name__)
 CORS(app)
@@ -48,14 +75,20 @@ def api_upload():
         return jsonify({'error': 'Nenhuma imagem enviada'}), 400
 
     file = request.files['image']
-    gender_choice = request.form['choice']
-    print(gender_choice)
-    is_king = gender_choice == "king"
+    is_king = True
+    gender_choice = "king"
+    try:
+        gender_choice = request.form['choice']
+        is_king = gender_choice == "king"
+    except BadRequestKeyError as e:
+        logger.warning("No gender choice sent. Using King")
 
     if file.filename == '':
+        logger.info(f"Invalid filename: '{file.filename}'.")
         return jsonify({'error': 'Nome de arquivo inválido'}), 400
 
     filename = generate_timestamped_filename(app.config['UPLOAD_FOLDER'], f"kingsday_in_{str(uuid.uuid4())}", "jpg")
+    logger.info(f"Request to generate a {gender_choice} with image '{file.filename}'.")
 
     # input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filename)
@@ -67,6 +100,7 @@ def api_upload():
     relative_path = os.path.relpath(result_path, 'static').replace("\\", "/")
     image_url = f'/static/{relative_path}'
 
+    logger.info(f"Finished to generate a {gender_choice} with image '{file.filename}'.")
     return jsonify({'message': 'Imagem processada com sucesso', 'image_url': image_url}), 200
 
 async def run_async_process(image_path, is_king):
@@ -101,5 +135,6 @@ def remove_old_files(minutes=10):
 # scheduler.start()
 
 if __name__ == '__main__':
+    logger.info("Application started (logging to file).")
     app.run(debug=True, host='0.0.0.0', port=5000)
 

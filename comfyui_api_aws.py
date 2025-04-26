@@ -13,6 +13,10 @@ import copy
 from utils import generate_timestamped_filename
 import comfyui_api_utils
 import time
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class ComfyUiAPI:
     def __init__(self, server_address, img_temp_folder, workflow_path, node_id_ksampler, node_id_image_load, node_id_text_input):
@@ -85,10 +89,10 @@ class ComfyUiAPI:
                     path = f"{response_data['subfolder']}/{path}"
                 return path
             else:
-                print(f"[Upload Error] {response.status_code} - {response.reason}")
+                logger.warning(f"[Upload Error] {response.status_code} - {response.reason}")
                 return None
         except Exception as e:
-            print(f"[Upload Exception] {e}")
+            logger.warning(f"[Upload Exception] {e}")
             return None
 
     def save_image(self, images: dict) -> str:
@@ -115,15 +119,15 @@ class ComfyUiAPI:
         prompt_id, aws_alb_cookie = comfyui_api_utils.queue_prompt(prompt, client_id, server_address)
         output_images = {}
 
-        print("Generation started.")
+        logger.debug("Generation started.")
         while True:
             history = comfyui_api_utils.get_history(prompt_id, server_address, aws_alb_cookie)
             if len(history) == 0:
-                print("Generation not ready, sleep 1s ...")
+                logger.debug("Generation not ready, sleep 1s ...")
                 time.sleep(1)
                 continue
             else:
-                print("Generation finished.")
+                logger.debug("Generation finished.")
                 break
 
         history = history[prompt_id]
@@ -170,15 +174,15 @@ class ComfyUiAPI:
         image_file_path = self.save_image(images)
         timing["save"] = datetime.datetime.now()
 
-        print("[Timing Info]")
-        print(f"Upload time:        {(timing['upload'] - start_time).total_seconds()}s")
-        print(f"Execution wait:     {(timing['start_execution'] - timing['upload']).total_seconds()}s")
-        print(f"Processing time:    {(timing['execution_done'] - timing['start_execution']).total_seconds()}s")
-        print(f"Saving time:        {(timing['save'] - timing['execution_done']).total_seconds()}s")
-        print(f"Total:              {(timing['save'] - start_time).total_seconds()}s")
+        logger.info(f"Timing Info for image: {image_path} => {image_file_path}")
+        logger.info(f"Upload time:        {(timing['upload'] - start_time).total_seconds()}s")
+        logger.info(f"Execution wait:     {(timing['start_execution'] - timing['upload']).total_seconds()}s")
+        logger.info(f"Processing time:    {(timing['execution_done'] - timing['start_execution']).total_seconds()}s")
+        logger.info(f"Saving time:        {(timing['save'] - timing['execution_done']).total_seconds()}s")
+        logger.info(f"Total:              {(timing['save'] - start_time).total_seconds()}s")
         #watermark_file_path = 'static/assets/logo_amstel.png'
 
-        print(f"[DEBUG] Saved image path: {image_file_path}")
+        logger.debug(f"Saved image path: {image_file_path}")
         assert image_file_path is not None, "Erro: Caminho da imagem gerada está vazio!"
 
         #if not os.path.exists(watermark_file_path):
