@@ -51,7 +51,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
 
 api = ComfyUiAPI(
-    server_address=param.STABLE_SWARM_API_SERVER,
+    server_address=param.COMFYUI_API_SERVER,
     img_temp_folder=app.config['OUTPUT_FOLDER'],
     workflow_path=param.WORKFLOW_PATH,
     node_id_ksampler=param.WORKFLOW_NODE_ID_KSAMPLER,
