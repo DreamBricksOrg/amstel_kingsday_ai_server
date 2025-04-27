@@ -98,10 +98,10 @@ class ComfyUiAPI:
     def save_image(self, images: dict) -> str:
         for node_id, image_list in images.items():
             for image_data in image_list:
-                image = Image.open(io.BytesIO(image_data))
-                image_filename = generate_timestamped_filename(self.img_temp_folder, "kingsday", "png")
-                image.save(image_filename, optimize=True)
-                return image_filename  # Retorna apenas a primeira imagem
+                with Image.open(io.BytesIO(image_data)) as image:
+                    image_filename = generate_timestamped_filename(self.img_temp_folder, "kingsday", "png")
+                    image.save(image_filename, optimize=True)
+                    return image_filename  # Retorna apenas a primeira imagem
 
     def prepare_prompt(self, is_king=True):
         king_prompt = "king wearing a golden crown, male, 1boy"
