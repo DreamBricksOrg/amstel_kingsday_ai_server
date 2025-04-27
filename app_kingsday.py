@@ -3,28 +3,26 @@ import asyncio
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, render_template, redirect, url_for, jsonify
-
-import utils
-#from comfyui_api import ComfyUiAPI
-from comfyui_api_aws import ComfyUiAPI
-import parameters as param
-from werkzeug.utils import secure_filename
 from werkzeug.exceptions import BadRequestKeyError
 from concurrent.futures import ThreadPoolExecutor
 from flask_cors import CORS
-import shutil
 import time
 import uuid
-
-from utils import generate_timestamped_filename
 import logging
+
+#from comfyui_api import ComfyUiAPI
+from comfyui_api_aws import ComfyUiAPI
+
+import parameters as param
+from utils import generate_timestamped_filename, count_files_with_extension, count_files_by_hour, generate_file_activity_plot_base64, read_last_n_lines
 
 # Configure logging to write to a file and to the std output
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Create a file handler and set its format and level
-file_handler = logging.FileHandler(generate_timestamped_filename("logs", param.LOG_FILENAME_PREFIX, "log"))
+log_filename = generate_timestamped_filename("logs", param.LOG_FILENAME_PREFIX, "log")
+file_handler = logging.FileHandler(log_filename)
 file_handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
@@ -61,13 +59,16 @@ api = ComfyUiAPI(
     node_id_text_input=param.WORKFLOW_NODE_ID_TEXT_INPUT
 )
 
+
 def process_image(image_path, is_king):
     return api.generate_image(image_path, is_king=is_king)
+
 
 @app.route('/', methods=['GET'])
 def index():
     image_url = request.args.get('image_url')
     return render_template("index.html", image_url=image_url)
+
 
 @app.route('/api/upload', methods=['POST'])
 def api_upload():
@@ -102,6 +103,21 @@ def api_upload():
 
     logger.info(f"Finished to generate a {gender_choice} with image '{file.filename}'.")
     return jsonify({'message': 'Imagem processada com sucesso', 'image_url': image_url}), 200
+
+
+@app.route('/stats')
+def stats():
+    OUTPUT_DIR = "static/outputs"
+    total_files = count_files_with_extension(OUTPUT_DIR, "png")
+    activity = count_files_by_hour(OUTPUT_DIR)
+    graph_base64 = generate_file_activity_plot_base64(activity, style="plot")
+    last_log_lines = read_last_n_lines(log_filename, 100)
+
+    return render_template('stats.html',
+                           total_files=total_files,
+                           graph_base64=graph_base64,
+                           log_text=last_log_lines)
+
 
 async def run_async_process(image_path, is_king):
     loop = asyncio.get_event_loop()
