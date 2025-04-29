@@ -1,14 +1,14 @@
 import os
 import asyncio
-
-from apscheduler.schedulers.background import BackgroundScheduler
-from flask import Flask, request, render_template, redirect, url_for, jsonify
-from werkzeug.exceptions import BadRequestKeyError
-from concurrent.futures import ThreadPoolExecutor
-from flask_cors import CORS
+import logging
 import time
 import uuid
-import logging
+
+from concurrent.futures import ThreadPoolExecutor
+from quart import Quart, request, render_template, jsonify
+from quart_cors import cors
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from werkzeug.exceptions import BadRequestKeyError
 
 from comfyui_api import ComfyUiAPI
 # from comfyui_api_aws import ComfyUiAPI
@@ -36,12 +36,11 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
-
 logger = logging.getLogger(__name__)
 
-
-app = Flask(__name__)
-CORS(app)
+# App Setup
+app = Quart(__name__)
+cors(app)
 app.config['UPLOAD_FOLDER'] = 'static/inputs'
 app.config['OUTPUT_FOLDER'] = 'static/outputs'
 
@@ -60,28 +59,32 @@ api = ComfyUiAPI(
 )
 
 
-def process_image(image_path, is_king):
-    return api.generate_image(image_path, is_king=is_king)
+async def process_image(image_path, is_king):
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, api.generate_image, image_path, is_king)
 
 
-@app.route('/', methods=['GET'])
-def index():
+@app.route('/')
+async def index():
     image_url = request.args.get('image_url')
-    return render_template("index.html", image_url=image_url)
+    return await render_template("index.html", image_url=image_url)
 
 
 @app.route('/api/upload', methods=['POST'])
-def api_upload():
-    if 'image' not in request.files:
+async def api_upload():
+    if 'image' not in (await request.files):
         return jsonify({'error': 'Nenhuma imagem enviada'}), 400
 
-    file = request.files['image']
+    form = await request.form
+    files = await request.files
+    file = files['image']
     is_king = True
     gender_choice = "king"
+
     try:
-        gender_choice = request.form['choice']
+        gender_choice = form['choice']
         is_king = gender_choice == "king"
-    except BadRequestKeyError as e:
+    except KeyError:
         logger.warning("No gender choice sent. Using King")
 
     if file.filename == '':
@@ -92,12 +95,9 @@ def api_upload():
     logger.info(f"Request to generate a {gender_choice} with image '{filename}'.")
 
     # input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(filename)
+    await file.save(filename)
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    result_path = api.generate_image(filename, is_king=is_king)
-
+    result_path = await process_image(filename, is_king=is_king)
     relative_path = os.path.relpath(result_path, 'static').replace("\\", "/")
     image_url = f'/static/{relative_path}'
 
@@ -106,25 +106,20 @@ def api_upload():
 
 
 @app.route('/stats')
-def stats():
+async def stats():
     OUTPUT_DIR = "static/outputs"
     total_files = count_files_with_extension(OUTPUT_DIR, "png")
     activity = count_files_by_hour(OUTPUT_DIR)
     graph_base64 = generate_file_activity_plot_base64(activity, style="plot")
     last_log_lines = read_last_n_lines(log_filename, 100)
 
-    return render_template('stats.html',
-                           total_files=total_files,
-                           graph_base64=graph_base64,
-                           log_text=last_log_lines)
+    return await render_template('stats.html',
+                                 total_files=total_files,
+                                 graph_base64=graph_base64,
+                                 log_text=last_log_lines)
 
 
-# async def run_async_process(image_path, is_king):
-#     loop = asyncio.get_event_loop()
-#     return await loop.run_in_executor(executor, process_image, image_path, is_king)
-
-
-def remove_old_files(minutes=10):
+async def remove_old_files(minutes=10):
     directories = ['static/outputs', 'static/inputs']
     current_time = time.time()
 
@@ -139,18 +134,25 @@ def remove_old_files(minutes=10):
 
                     if time_difference > minutes:
                         os.remove(file_path)
-                        print(f'O arquivo "{filename}" foi excluído de "{directory}".')
+                        logger.info(f'O arquivo "{filename}" foi excluído de "{directory}".')
                     else:
-                        print(f'O arquivo "{filename}" em "{directory}" foi criado há menos de {minutes} minutos.')
+                        logger.debug(f'O arquivo "{filename}" em "{directory}" foi criado há menos de {minutes} minutos.')
         else:
-            print(f'O diretório "{directory}" não existe.')
+            logger.warning(f'O diretório "{directory}" não existe.')
 
 
-# scheduler = BackgroundScheduler()
-# scheduler.add_job(remove_old_files, 'interval', minutes=15)
-# scheduler.start()
+scheduler = AsyncIOScheduler()
+scheduler.add_job(remove_old_files, 'interval', minutes=15)
+scheduler.start()
+
 
 if __name__ == '__main__':
-    logger.info("Application started (logging to file).")
-    app.run(host='0.0.0.0', port=param.SERVER_PORT)
+    logger.info("Application started (logging to file). Quart version.")
+    import hypercorn.asyncio
+    import hypercorn.config
+
+    config = hypercorn.config.Config()
+    config.bind = [f"0.0.0.0:{param.SERVER_PORT}"]
+    asyncio.run(hypercorn.asyncio.serve(app, config))
+
 
