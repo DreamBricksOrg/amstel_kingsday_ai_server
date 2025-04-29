@@ -10,8 +10,8 @@ import time
 import uuid
 import logging
 
-#from comfyui_api import ComfyUiAPI
-from comfyui_api_aws import ComfyUiAPI
+from comfyui_api import ComfyUiAPI
+# from comfyui_api_aws import ComfyUiAPI
 
 import parameters as param
 from utils import generate_timestamped_filename, count_files_with_extension, count_files_by_hour, generate_file_activity_plot_base64, read_last_n_lines
@@ -96,7 +96,7 @@ def api_upload():
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    result_path = loop.run_until_complete(run_async_process(filename, is_king))
+    result_path = api.generate_image(filename, is_king=is_king)
 
     relative_path = os.path.relpath(result_path, 'static').replace("\\", "/")
     image_url = f'/static/{relative_path}'
@@ -119,9 +119,9 @@ def stats():
                            log_text=last_log_lines)
 
 
-async def run_async_process(image_path, is_king):
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(executor, process_image, image_path, is_king)
+# async def run_async_process(image_path, is_king):
+#     loop = asyncio.get_event_loop()
+#     return await loop.run_in_executor(executor, process_image, image_path, is_king)
 
 
 def remove_old_files(minutes=10):
@@ -152,5 +152,5 @@ def remove_old_files(minutes=10):
 
 if __name__ == '__main__':
     logger.info("Application started (logging to file).")
-    app.run(debug=True, host='0.0.0.0', port=param.SERVER_PORT)
+    app.run(host='0.0.0.0', port=param.SERVER_PORT)
 
