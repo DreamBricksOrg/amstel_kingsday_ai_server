@@ -141,9 +141,9 @@ async def remove_old_files(minutes=10):
             logger.warning(f'O diretório "{directory}" não existe.')
 
 
-scheduler = AsyncIOScheduler()
-scheduler.add_job(remove_old_files, 'interval', minutes=15)
-scheduler.start()
+# scheduler = AsyncIOScheduler()
+# scheduler.add_job(remove_old_files, 'interval', minutes=15)
+# scheduler.start()
 
 
 if __name__ == '__main__':
